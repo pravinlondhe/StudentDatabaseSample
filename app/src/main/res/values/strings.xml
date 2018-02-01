@@ -1,0 +1,4 @@
+<resources>
+    <string name="app_name">StudentDatabase</string>
+    <string name="available_student_list">Available Student List</string>
+</resources>
