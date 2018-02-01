@@ -31,7 +31,6 @@
             tools:listitem="@layout/item_student" />
     </LinearLayout>
 
-
     <android.support.design.widget.FloatingActionButton
         android:id="@+id/fab_add_student"
         android:layout_width="wrap_content"

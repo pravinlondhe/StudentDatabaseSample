@@ -1,4 +1,8 @@
 <resources>
     <string name="app_name">StudentDatabase</string>
     <string name="available_student_list">Available Student List</string>
+    <string name="student_name">Student Name:</string>
+    <string name="hint_add_student_name">Enter student name</string>
+    <string name="button_submit">Submit</string>
+    <string name="button_cancel">Cancel</string>
 </resources>

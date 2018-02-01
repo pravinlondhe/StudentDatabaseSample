@@ -29,17 +29,22 @@ public class AddStudentDialog extends DialogFragment implements View.OnClickList
     }
 
     private void initViews(View view) {
-        mStudentNameEt = view.findViewById();
-        mSubmitTv = view.findViewById();
+        mStudentNameEt = view.findViewById(R.id.et_student_name);
+        mSubmitTv = view.findViewById(R.id.bt_submit);
         mSubmitTv.setOnClickListener(this);
         mCancelTv.setOnClickListener(this);
-        mCancelTv = view.findViewById();
+        mCancelTv = view.findViewById(R.id.bt_cancel);
     }
 
     @Override
     public void onClick(View view) {
         switch (view.getId()) {
-            case
+            case R.id.bt_submit:
+                break;
+            case R.id.bt_cancel:
+                break;
+            default:
+                // default add student dialog
         }
     }
 }
