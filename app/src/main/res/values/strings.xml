@@ -5,4 +5,8 @@
     <string name="hint_add_student_name">Enter student name</string>
     <string name="button_submit">Submit</string>
     <string name="button_cancel">Cancel</string>
+    <string name="title_dialog">Add student details</string>
+    <string name="toast_invalid_input">Invalid input</string>
+    <string name="toast_record_added">Student added sucessfully!!!</string>
+    <string name="toast_error_in_adding">Error in adding student record.Try again.</string>
 </resources>

@@ -20,7 +20,7 @@
             android:layout_margin="@dimen/default_small_margin"
             android:gravity="center_horizontal"
             android:text="@string/available_student_list"
-            android:textSize="?android:textAppearanceLarge"
+            android:textSize="@dimen/large_font"
             android:textStyle="bold" />
 
         <android.support.v7.widget.RecyclerView
@@ -37,5 +37,6 @@
         android:layout_height="wrap_content"
         android:layout_gravity="end|bottom"
         android:layout_margin="@dimen/default_small_margin"
-        android:src="@android:drawable/ic_input_add" />
+        android:src="@android:drawable/ic_input_add"
+        android:tint="@android:color/white" />
 </FrameLayout>

@@ -1,6 +1,5 @@
 package com.pravin.android.studentdatabase;
 
-import android.content.Context;
 import android.support.v7.widget.RecyclerView;
 import android.view.LayoutInflater;
 import android.view.View;
@@ -19,26 +18,37 @@ import java.util.List;
 
 public class StudentDbAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolder> {
 
+    private final static String TAG = StudentDbAdapter.class.getSimpleName();
+    private static List<Student> mStudentList = new ArrayList<>();
     private final int ITEM_TYPE_LOADING = 0;
     private final int ITEM_TYPE_STUDENT = 1;
-    private List<Student> mStudentList = new ArrayList<>();
-    private Context mContext;
 
-    public StudentDbAdapter(List<Student> list, Context context) {
-        this.mStudentList = new ArrayList<>(list);
-        this.mContext = context;
+    public StudentDbAdapter(List<Student> list) {
+        mStudentList = new ArrayList<>(list);
     }
 
+    public void newDataAdded(List<Student> list) {
+        mStudentList = new ArrayList<>(list);
+        notifyDataSetChanged();
+    }
+
+    public synchronized void loaded10MoreItems(List<Student> list, int lastIndex) {
+        mStudentList.addAll(new ArrayList<>(list));
+        notifyItemRangeInserted(lastIndex + 1, mStudentList.size());
+        mStudentList.subList(10, mStudentList.size());
+        notifyItemRangeRemoved(0, 10);
+    }
 
     @Override
     public RecyclerView.ViewHolder onCreateViewHolder(ViewGroup parent, int viewType) {
-
+        LayoutInflater inflater = LayoutInflater.from(parent.getContext());
         switch (viewType) {
             case ITEM_TYPE_LOADING:
-                View view = LayoutInflater.from(mContext).inflate(R.layout.item_loading_progress, parent);
+
+                View view = inflater.inflate(R.layout.item_student, parent, false);
                 return new LoadingProgressViewHolder(view);
             case ITEM_TYPE_STUDENT:
-                view = LayoutInflater.from(mContext).inflate(R.layout.item_student, parent);
+                view = inflater.inflate(R.layout.item_student, parent, false);
                 return new StudentItemViewHolder(view);
             default:
                 // viewType default case
@@ -68,37 +78,35 @@ public class StudentDbAdapter extends RecyclerView.Adapter<RecyclerView.ViewHold
     }
 
 
-    public class LoadingProgressViewHolder extends RecyclerView.ViewHolder {
+    private static class LoadingProgressViewHolder extends RecyclerView.ViewHolder {
 
         private ProgressBar mProgressBar;
 
-        public LoadingProgressViewHolder(View itemView) {
+        private LoadingProgressViewHolder(View itemView) {
             super(itemView);
             mProgressBar = itemView.findViewById(R.id.pb_loading);
         }
 
-        public void setProgressBar() {
+        private void setProgressBar() {
             // TODO: Implement progress bar
 
         }
     }
 
-    public class StudentItemViewHolder extends RecyclerView.ViewHolder {
+    private static class StudentItemViewHolder extends RecyclerView.ViewHolder {
 
         private TextView mRollNo;
         private TextView mStudentName;
 
-        public StudentItemViewHolder(View itemView) {
+        private StudentItemViewHolder(View itemView) {
             super(itemView);
             mRollNo = itemView.findViewById(R.id.tv_roll_no);
             mStudentName = itemView.findViewById(R.id.tv_student_name);
         }
 
-        public void setStudentData(int position) {
-            mRollNo.setText(mStudentList.get(position).getRollNo());
+        private void setStudentData(int position) {
+            mRollNo.setText(String.valueOf(mStudentList.get(position).getRollNo()));
             mStudentName.setText(mStudentList.get(position).getName());
         }
     }
-
-
 }

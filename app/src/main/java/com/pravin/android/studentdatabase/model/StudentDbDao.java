@@ -1,9 +1,9 @@
 package com.pravin.android.studentdatabase.model;
 
 import android.content.ContentValues;
-import android.content.Context;
 import android.database.Cursor;
 import android.database.sqlite.SQLiteDatabase;
+import android.util.Log;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -14,8 +14,10 @@ import java.util.List;
 
 public class StudentDbDao {
 
+
     private static final String STUDENT_NAME_COL_NAME = "student_name";
     private static final String ROLL_NO_COL_NAME = "roll_no";
+    private final static String TAG = StudentDbDao.class.getSimpleName();
     private static StudentDatabase mStudentDatabase;
     private static StudentDbDao mStudentDbDao;
 
@@ -23,7 +25,8 @@ public class StudentDbDao {
         //Default constructor
     }
 
-    public static StudentDbDao getStudentDbDao(Context context, StudentDatabase studentDatabase) {
+
+    public static StudentDbDao getStudentDbDao(StudentDatabase studentDatabase) {
         mStudentDatabase = studentDatabase;
         if (null == mStudentDbDao) {
             mStudentDbDao = new StudentDbDao();
@@ -31,26 +34,49 @@ public class StudentDbDao {
         return mStudentDbDao;
     }
 
-    public void addStudent(String studentName) {
+    public synchronized boolean addStudent(String studentName) {
         if (null == studentName) {
-            return;
+            return false;
         }
         SQLiteDatabase database = mStudentDatabase.getWritableDatabase();
         ContentValues contentValues = new ContentValues();
         contentValues.put(STUDENT_NAME_COL_NAME, studentName);
-        database.insert(mStudentDatabase.getTableName(), null, contentValues);
+        long val = database.insert(mStudentDatabase.getTableName(), null, contentValues);
+        return val != -1;
+
     }
 
-    public List<Student> get50StudentList(int startIndex) {
+    public synchronized List<Student> get50StudentList(int startIndex) {
+        List<Student> list = new ArrayList<>();
+        String readQuery = "SELECT " + ROLL_NO_COL_NAME + "," + STUDENT_NAME_COL_NAME + " FROM " + mStudentDatabase.getTableName() + " ORDER BY " + ROLL_NO_COL_NAME;
+        SQLiteDatabase database = mStudentDatabase.getWritableDatabase();
+        Cursor cursor = database.rawQuery(readQuery, null);
+        Log.d(TAG, "Cursor:" + cursor.getCount() + " " + mStudentDatabase.getTableName());
+        if (cursor.getCount() != 0 && cursor.moveToPosition(startIndex)) {
+            while (!cursor.isAfterLast() && list.size() < 50) {
+                int rollNo = cursor.getInt(cursor.getColumnIndex(ROLL_NO_COL_NAME));
+                String name = cursor.getString(cursor.getColumnIndex(STUDENT_NAME_COL_NAME));
+                list.add(new Student(rollNo, name));
+                cursor.moveToNext();
+            }
+        }
+
+        cursor.close();
+
+        return list;
+    }
+
+    public synchronized List<Student> get10StudentList(int startIndex) {
         List<Student> list = new ArrayList<>();
         String readQuery = "SELECT * FROM " + mStudentDatabase.getTableName() + " ORDER BY " + ROLL_NO_COL_NAME;
         SQLiteDatabase database = mStudentDatabase.getReadableDatabase();
         Cursor cursor = database.rawQuery(readQuery, null);
         if (null != cursor && cursor.moveToPosition(startIndex)) {
-            while (!cursor.isAfterLast() && list.size() <= 50) {
+            while (!cursor.isAfterLast() && list.size() < 10) {
                 int rollNo = cursor.getInt(cursor.getColumnIndex(ROLL_NO_COL_NAME));
                 String name = cursor.getString(cursor.getColumnIndex(STUDENT_NAME_COL_NAME));
                 list.add(new Student(rollNo, name));
+                cursor.moveToNext();
             }
         }
         if (null != cursor) {
@@ -59,21 +85,4 @@ public class StudentDbDao {
         return list;
     }
 
-    public List<Student> get10StudentList(int startIndex) {
-        List<Student> list = new ArrayList<>();
-        String readQuery = "SELECT * FROM " + mStudentDatabase.getTableName() + " ORDER BY " + ROLL_NO_COL_NAME;
-        SQLiteDatabase database = mStudentDatabase.getReadableDatabase();
-        Cursor cursor = database.rawQuery(readQuery, null);
-        if (null != cursor && cursor.moveToPosition(startIndex)) {
-            while (!cursor.isAfterLast() && list.size() <= 10) {
-                int rollNo = cursor.getInt(cursor.getColumnIndex(ROLL_NO_COL_NAME));
-                String name = cursor.getString(cursor.getColumnIndex(STUDENT_NAME_COL_NAME));
-                list.add(new Student(rollNo, name));
-            }
-        }
-        if (null != cursor) {
-            cursor.close();
-        }
-        return list;
-    }
 }
