@@ -20,6 +20,7 @@ public class StudentDbDao {
     private final static String TAG = StudentDbDao.class.getSimpleName();
     private static StudentDatabase mStudentDatabase;
     private static StudentDbDao mStudentDbDao;
+    private List<Student> list = new ArrayList<>();
 
     private StudentDbDao() {
         //Default constructor
@@ -47,7 +48,7 @@ public class StudentDbDao {
     }
 
     public synchronized List<Student> get50StudentList(int startIndex) {
-        List<Student> list = new ArrayList<>();
+        list.clear();
         String readQuery = "SELECT " + ROLL_NO_COL_NAME + "," + STUDENT_NAME_COL_NAME + " FROM " + mStudentDatabase.getTableName() + " ORDER BY " + ROLL_NO_COL_NAME;
         SQLiteDatabase database = mStudentDatabase.getWritableDatabase();
         Cursor cursor = database.rawQuery(readQuery, null);
@@ -67,11 +68,14 @@ public class StudentDbDao {
     }
 
     public synchronized List<Student> get10StudentList(int startIndex) {
-        List<Student> list = new ArrayList<>();
-        String readQuery = "SELECT * FROM " + mStudentDatabase.getTableName() + " ORDER BY " + ROLL_NO_COL_NAME;
+        list.clear();
+        String readQuery = "SELECT * FROM " + mStudentDatabase.getTableName()
+                + " WHERE " + ROLL_NO_COL_NAME + " >=" + startIndex
+                + " ORDER BY " + ROLL_NO_COL_NAME
+                + " LIMIT 10";
         SQLiteDatabase database = mStudentDatabase.getReadableDatabase();
         Cursor cursor = database.rawQuery(readQuery, null);
-        if (null != cursor && cursor.moveToPosition(startIndex)) {
+        if (null != cursor && cursor.moveToPosition(0)) {
             while (!cursor.isAfterLast() && list.size() < 10) {
                 int rollNo = cursor.getInt(cursor.getColumnIndex(ROLL_NO_COL_NAME));
                 String name = cursor.getString(cursor.getColumnIndex(STUDENT_NAME_COL_NAME));

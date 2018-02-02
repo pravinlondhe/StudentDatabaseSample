@@ -1,7 +1,6 @@
 package com.pravin.android.studentdatabase.presenter;
 
 import android.content.Context;
-import android.os.Environment;
 
 import com.pravin.android.studentdatabase.StudentDbContract;
 import com.pravin.android.studentdatabase.model.StudentDatabase;
@@ -13,7 +12,7 @@ import com.pravin.android.studentdatabase.model.StudentDbDao;
 
 public class StudentDbPresenter implements StudentDbContract.Presenter {
 
-    private final static String DATABASE_NAME = Environment.getExternalStorageDirectory() + "/STUDENT_DATABASE.db";
+    private final static String DATABASE_NAME = "STUDENT_DATABASE.db";
     private final static String TABLE_NAME = "STUDENT_TABLE";
     private final static int DATABASE_VERSION = 1;
     private static StudentDbPresenter mPresenter;

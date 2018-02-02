@@ -34,7 +34,7 @@ import java.util.List;
 
 public class MainActivity extends AppCompatActivity implements View.OnClickListener {
 
-    private final static String DATABASE_NAME = Environment.getExternalStorageDirectory() + "/STUDENT_DATABASE.db";
+    private final static String DATABASE_NAME = "STUDENT_DATABASE.db";
     private final static String TABLE_NAME = "STUDENT_TABLE";
     private final static int DATABASE_VERSION = 1;
     private final static int REQUEST_CODE = 100;
@@ -45,30 +45,47 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
     private StudentDatabase mDatabase;
     private List<Student> mList = new ArrayList<>();
     private StudentDbAdapter mAdapter;
+    private volatile boolean isLoading;
+    private volatile int mPage = 0;
+    private volatile int totalItems;
+    private volatile int lastVisiblePosition;
+
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
-        mDatabase = new StudentDatabase(this, DATABASE_NAME, TABLE_NAME, null, DATABASE_VERSION);
-        mDbDao = StudentDbDao.getStudentDbDao(mDatabase);
         initViews();
+        initRecyclerView();
     }
 
-    @Override
-    protected void onPause() {
-        super.onPause();
-        if (null != mDatabase) {
-            mDatabase.close();
-        }
-    }
 
     @Override
     protected void onResume() {
         super.onResume();
         requestPermission();
-        initRecyclerView();
-
+        mDatabase = new StudentDatabase(this, DATABASE_NAME, TABLE_NAME, null, DATABASE_VERSION);
+        mDbDao = StudentDbDao.getStudentDbDao(mDatabase);
+        HandlerThread handlerThread = new HandlerThread("loading");
+        handlerThread.start();
+        Handler handler = new Handler(handlerThread.getLooper());
+        handler.postDelayed(new Runnable() {
+            @Override
+            public void run() {
+                mList = new ArrayList<>(mDbDao.get50StudentList(0));
+                Log.d(TAG, "Got 50 list");
+                for (Student s : mList) {
+                    Log.d(TAG, "Roll No.:" + s.getRollNo() + " Name:" + s.getName());
+                }
+                runOnUiThread(new Runnable() {
+                    @Override
+                    public void run() {
+                        Log.d(TAG, "Updating RV");
+                        mAdapter.newDataAdded(mList);
+                    }
+                });
+            }
+        }, 1500);
     }
 
     private void initRecyclerView() {
@@ -77,25 +94,21 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
         mAdapter = new StudentDbAdapter(mList);
         mStudentListRv.setAdapter(mAdapter);
 
-        mList = new ArrayList<>(mDbDao.get50StudentList(0));
-        Log.d(TAG, "Got 50 list");
-        for (Student s : mList) {
-            Log.d(TAG, "Roll No.:" + s.getRollNo() + " Name:" + s.getName());
-        }
-        mAdapter.newDataAdded(mList);
-
         mStudentListRv.addOnScrollListener(new RecyclerView.OnScrollListener() {
             @Override
             public void onScrolled(RecyclerView recyclerView, int dx, int dy) {
                 super.onScrolled(recyclerView, dx, dy);
-                int totalItems = manager.getItemCount();
-                int lastVisiblePosition = manager.findLastVisibleItemPosition();
-                Log.d(TAG, "totalItems:" + totalItems);
-                Log.d(TAG, "LastVisiblePos:" + lastVisiblePosition);
-                if (lastVisiblePosition >= totalItems - 1) {
+
+                totalItems = manager.getItemCount();
+                lastVisiblePosition = manager.findLastVisibleItemPosition();
+                Log.d(TAG, "totalItems:" + totalItems + " LastVisiblePos:" + lastVisiblePosition);
+                Log.d(TAG, "isLoading:" + isLoading);
+                if (!isLoading && lastVisiblePosition >= totalItems - 8) {
+                    Log.d(TAG, "Loading new dataset");
+                    isLoading = true;
+                    mPage++;
                     loadMoreItems(lastVisiblePosition);
                 }
-
             }
         });
 
@@ -103,13 +116,24 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
     }
 
     private void loadMoreItems(final int index) {
+        Log.d(TAG, "start pt:" + (index + 1 + (mPage * 10)));
+        Handler h = new Handler();
+        h.post(new Runnable() {
+            @Override
+            public void run() {
+                mList = new ArrayList<>(mDbDao.get10StudentList((index + 1 + (mPage * 10))));
+                Log.d(TAG, "Got 10 list");
+                for (Student s : mList) {
+                    Log.d(TAG, "Roll No.:" + s.getRollNo() + " Name:" + s.getName());
+                }
+                isLoading = false;
+                if (mList.size() > 0) {
+                    mAdapter.loaded10MoreItems(mList, index);
+                    notifyDatasetChanged1(index);
+                }
+            }
+        });
 
-        mList = new ArrayList<>(mDbDao.get10StudentList(index + 1));
-        Log.d(TAG, "Got 10 list");
-        for (Student s : mList) {
-            Log.d(TAG, "Roll No.:" + s.getRollNo() + " Name:" + s.getName());
-        }
-        mAdapter.loaded10MoreItems(mList, index);
     }
 
     private void initViews() {
@@ -140,10 +164,9 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
         dialog.show(fragmentManager, "add_student_dialog");
     }
 
-
     private void requestPermission() {
-        if (ContextCompat.checkSelfPermission(this, Manifest.permission.WRITE_EXTERNAL_STORAGE) != PackageManager.PERMISSION_GRANTED) {
-            ActivityCompat.requestPermissions(this, new String[]{Manifest.permission.WRITE_EXTERNAL_STORAGE}, REQUEST_CODE);
+        if (ContextCompat.checkSelfPermission(this, Manifest.permission.READ_EXTERNAL_STORAGE) != PackageManager.PERMISSION_GRANTED) {
+            ActivityCompat.requestPermissions(this, new String[]{Manifest.permission.READ_EXTERNAL_STORAGE}, REQUEST_CODE);
         }
     }
 
@@ -159,7 +182,7 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
         }
     }
 
-    public void insertStudentNames() {
+    private void insertStudentNames() {
         HandlerThread handlerThread = new HandlerThread("generator");
         handlerThread.start();
         Handler handler = new Handler(handlerThread.getLooper());
@@ -185,5 +208,15 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
             }
         });
 
+    }
+
+    private void notifyDatasetChanged1(final int index) {
+        mStudentListRv.post(new Runnable() {
+            @Override
+            public void run() {
+                mAdapter.notifyItemRangeRemoved(0, 10);
+                mAdapter.notifyItemRangeInserted((index + 1), mAdapter.getItemCount());
+            }
+        });
     }
 }

@@ -34,9 +34,11 @@ public class StudentDbAdapter extends RecyclerView.Adapter<RecyclerView.ViewHold
 
     public synchronized void loaded10MoreItems(List<Student> list, int lastIndex) {
         mStudentList.addAll(new ArrayList<>(list));
-        notifyItemRangeInserted(lastIndex + 1, mStudentList.size());
-        mStudentList.subList(10, mStudentList.size());
-        notifyItemRangeRemoved(0, 10);
+        mStudentList = new ArrayList<>(mStudentList.subList(10, mStudentList.size()));
+//       Log.d(TAG,"After added last 10 and removed first 10");
+//        for (Student s : mStudentList) {
+//            Log.d(TAG, "Roll No.:" + s.getRollNo() + " Name:" + s.getName());
+//        }
     }
 
     @Override
