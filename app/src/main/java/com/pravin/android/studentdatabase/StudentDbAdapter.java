@@ -1,6 +1,7 @@
 package com.pravin.android.studentdatabase;
 
 import android.support.v7.widget.RecyclerView;
+import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -11,10 +12,6 @@ import com.pravin.android.studentdatabase.model.Student;
 
 import java.util.ArrayList;
 import java.util.List;
-
-/**
- * Created by pravin on 1/2/18.
- */
 
 public class StudentDbAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolder> {
 
@@ -32,13 +29,33 @@ public class StudentDbAdapter extends RecyclerView.Adapter<RecyclerView.ViewHold
         notifyDataSetChanged();
     }
 
-    public synchronized void loaded10MoreItems(List<Student> list, int lastIndex) {
+    public synchronized void loaded10MoreDownItems(List<Student> list) {
         mStudentList.addAll(new ArrayList<>(list));
         mStudentList = new ArrayList<>(mStudentList.subList(10, mStudentList.size()));
-//       Log.d(TAG,"After added last 10 and removed first 10");
-//        for (Student s : mStudentList) {
-//            Log.d(TAG, "Roll No.:" + s.getRollNo() + " Name:" + s.getName());
-//        }
+        Log.d(TAG, "New list with 10 down list");
+        for (Student s : mStudentList) {
+            Log.d(TAG, "Roll No.:" + s.getRollNo() + " Name:" + s.getName());
+        }
+    }
+
+    public void displayLoadingItem() {
+        mStudentList.add(null);
+    }
+
+    public void removeLoadingItem() {
+        mStudentList.remove(null);
+        Log.d(TAG, "removed loading item" + mStudentList.size());
+
+    }
+
+
+    public synchronized void loaded10MoreUpItems(List<Student> list) {
+        mStudentList.addAll(0, list);
+        mStudentList = new ArrayList<>(mStudentList.subList(0, 50));
+        Log.d(TAG, "New list with 10 Up list");
+        for (Student s : mStudentList) {
+            Log.d(TAG, "Roll No.:" + s.getRollNo() + " Name:" + s.getName());
+        }
     }
 
     @Override
@@ -46,8 +63,8 @@ public class StudentDbAdapter extends RecyclerView.Adapter<RecyclerView.ViewHold
         LayoutInflater inflater = LayoutInflater.from(parent.getContext());
         switch (viewType) {
             case ITEM_TYPE_LOADING:
-
-                View view = inflater.inflate(R.layout.item_student, parent, false);
+                Log.d(TAG, "loading item");
+                View view = inflater.inflate(R.layout.item_loading_progress, parent, false);
                 return new LoadingProgressViewHolder(view);
             case ITEM_TYPE_STUDENT:
                 view = inflater.inflate(R.layout.item_student, parent, false);
@@ -63,7 +80,8 @@ public class StudentDbAdapter extends RecyclerView.Adapter<RecyclerView.ViewHold
         if (holder instanceof StudentItemViewHolder) {
             ((StudentItemViewHolder) holder).setStudentData(position);
         } else if (holder instanceof LoadingProgressViewHolder) {
-            ((LoadingProgressViewHolder) holder).setProgressBar();
+            LoadingProgressViewHolder viewHolder = (LoadingProgressViewHolder) holder;
+            viewHolder.setProgressBar();
         }
 
     }
@@ -91,6 +109,7 @@ public class StudentDbAdapter extends RecyclerView.Adapter<RecyclerView.ViewHold
 
         private void setProgressBar() {
             // TODO: Implement progress bar
+            mProgressBar.isShown();
 
         }
     }

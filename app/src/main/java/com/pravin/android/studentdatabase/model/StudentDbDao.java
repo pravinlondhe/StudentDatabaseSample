@@ -47,13 +47,13 @@ public class StudentDbDao {
 
     }
 
-    public synchronized List<Student> get50StudentList(int startIndex) {
+    public synchronized List<Student> get50StudentList() {
         list.clear();
         String readQuery = "SELECT " + ROLL_NO_COL_NAME + "," + STUDENT_NAME_COL_NAME + " FROM " + mStudentDatabase.getTableName() + " ORDER BY " + ROLL_NO_COL_NAME;
         SQLiteDatabase database = mStudentDatabase.getWritableDatabase();
         Cursor cursor = database.rawQuery(readQuery, null);
-        Log.d(TAG, "Cursor:" + cursor.getCount() + " " + mStudentDatabase.getTableName());
-        if (cursor.getCount() != 0 && cursor.moveToPosition(startIndex)) {
+        Log.d(TAG, "Cursor:" + cursor.getCount());
+        if (cursor.getCount() != 0 && cursor.moveToPosition(0)) {
             while (!cursor.isAfterLast() && list.size() < 50) {
                 int rollNo = cursor.getInt(cursor.getColumnIndex(ROLL_NO_COL_NAME));
                 String name = cursor.getString(cursor.getColumnIndex(STUDENT_NAME_COL_NAME));

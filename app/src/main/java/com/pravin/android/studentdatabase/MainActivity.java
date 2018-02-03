@@ -17,7 +17,6 @@ import android.support.v7.widget.LinearLayoutManager;
 import android.support.v7.widget.RecyclerView;
 import android.util.Log;
 import android.view.View;
-import android.widget.TextView;
 
 import com.pravin.android.studentdatabase.model.Student;
 import com.pravin.android.studentdatabase.model.StudentDatabase;
@@ -40,15 +39,16 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
     private final static int REQUEST_CODE = 100;
     private final static String TAG = MainActivity.class.getSimpleName();
     private RecyclerView mStudentListRv;
-    private TextView mAvailableStudentTv;
     private StudentDbDao mDbDao;
     private StudentDatabase mDatabase;
     private List<Student> mList = new ArrayList<>();
     private StudentDbAdapter mAdapter;
-    private volatile boolean isLoading;
-    private volatile int mPage = 0;
+    private volatile boolean isLoadingDown;
+    private volatile boolean isLoadingUp;
+    private volatile int mPage = 5;
     private volatile int totalItems;
     private volatile int lastVisiblePosition;
+    private volatile int firstVisiblePosition;
 
 
     @Override
@@ -63,6 +63,7 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
     @Override
     protected void onResume() {
         super.onResume();
+//        checkDbExits();
         requestPermission();
         mDatabase = new StudentDatabase(this, DATABASE_NAME, TABLE_NAME, null, DATABASE_VERSION);
         mDbDao = StudentDbDao.getStudentDbDao(mDatabase);
@@ -72,7 +73,7 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
         handler.postDelayed(new Runnable() {
             @Override
             public void run() {
-                mList = new ArrayList<>(mDbDao.get50StudentList(0));
+                mList = new ArrayList<>(mDbDao.get50StudentList());
                 Log.d(TAG, "Got 50 list");
                 for (Student s : mList) {
                     Log.d(TAG, "Roll No.:" + s.getRollNo() + " Name:" + s.getName());
@@ -98,47 +99,99 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
             @Override
             public void onScrolled(RecyclerView recyclerView, int dx, int dy) {
                 super.onScrolled(recyclerView, dx, dy);
+//                Log.d(TAG,"x position:"+dx+" y position:"+dy);
 
                 totalItems = manager.getItemCount();
                 lastVisiblePosition = manager.findLastVisibleItemPosition();
-                Log.d(TAG, "totalItems:" + totalItems + " LastVisiblePos:" + lastVisiblePosition);
-                Log.d(TAG, "isLoading:" + isLoading);
-                if (!isLoading && lastVisiblePosition >= totalItems - 8) {
-                    Log.d(TAG, "Loading new dataset");
-                    isLoading = true;
-                    mPage++;
-                    loadMoreItems(lastVisiblePosition);
+
+                if (dx <= dy) { //down scroll
+                    Log.d(TAG, "totalItems:" + totalItems + " LastVisiblePos:" + lastVisiblePosition);
+//                    Log.d(TAG, "isLoading:" + isLoading);
+                    if (!isLoadingDown && lastVisiblePosition >= totalItems - 5) {
+                        Log.d(TAG, "Loading new dataset");
+                        isLoadingDown = true;
+                        loadMoreDownItems();
+                    }
+                } else if (dx >= dy) { // up scroll
+                    firstVisiblePosition = manager.findFirstVisibleItemPosition();
+                    Log.d(TAG, "totalItems:" + totalItems + " FirstVisiblePos:" + firstVisiblePosition
+                            + " mPage:" + mPage + " isLoadingUp:" + isLoadingUp);
+//                    Log.d(TAG, "isLoading:" + isLoading+" LastVisiblePos:" + lastVisiblePosition);
+                    int startIndex = ((mPage - 5) * 10) - 9;
+                    if (!isLoadingUp && firstVisiblePosition <= 5 && startIndex > 0) {
+                        Log.d(TAG, "Loading new dataset");
+                        isLoadingUp = true;
+                        loadMoreUpItems();
+                    }
                 }
             }
         });
-
-
     }
 
-    private void loadMoreItems(final int index) {
-        Log.d(TAG, "start pt:" + (index + 1 + (mPage * 10)));
+    private void loadMoreUpItems() {
+        final int startPoint = ((mPage - 5) * 10) - 9;
+        Log.d(TAG, "Up start pt:" + startPoint);
+
         Handler h = new Handler();
         h.post(new Runnable() {
             @Override
             public void run() {
-                mList = new ArrayList<>(mDbDao.get10StudentList((index + 1 + (mPage * 10))));
+                mList = new ArrayList<>(mDbDao.get10StudentList(startPoint));
+//                Log.d(TAG, "Got 10 Up list");
+//                for (Student s : mList) {
+//                    Log.d(TAG, "Roll No.:" + s.getRollNo() + " Name:" + s.getName());
+//                }
+                mPage--;
+                if (mList.size() > 0) {
+                    mAdapter.loaded10MoreUpItems(mList);
+                    refreshUpList();
+
+                }
+            }
+        });
+
+    }
+
+    private void loadMoreDownItems() {
+        Log.d(TAG, "Down start pt:" + ((mPage * 10) + 1));
+
+        mAdapter.displayLoadingItem();
+        mStudentListRv.post(new Runnable() {
+            @Override
+            public void run() {
+                mAdapter.notifyItemInserted(51);
+            }
+        });
+
+        Handler h = new Handler();
+        h.postDelayed(new Runnable() {
+            @Override
+            public void run() {
+                mList = new ArrayList<>(mDbDao.get10StudentList(((mPage * 10) + 1)));
                 Log.d(TAG, "Got 10 list");
                 for (Student s : mList) {
                     Log.d(TAG, "Roll No.:" + s.getRollNo() + " Name:" + s.getName());
                 }
-                isLoading = false;
+                mAdapter.removeLoadingItem();
+                mStudentListRv.post(new Runnable() {
+                    @Override
+                    public void run() {
+                        mAdapter.notifyItemRemoved(51);
+                    }
+                });
+
+                mPage++;
                 if (mList.size() > 0) {
-                    mAdapter.loaded10MoreItems(mList, index);
-                    notifyDatasetChanged1(index);
+                    mAdapter.loaded10MoreDownItems(mList);
+                    refreshDownList();
                 }
             }
-        });
+        }, 1000);
 
     }
 
     private void initViews() {
         mStudentListRv = findViewById(R.id.rv_student_list);
-        mAvailableStudentTv = findViewById(R.id.tv_available_list);
         FloatingActionButton addStudentFab = findViewById(R.id.fab_add_student);
         addStudentFab.setOnClickListener(this);
     }
@@ -210,13 +263,35 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
 
     }
 
-    private void notifyDatasetChanged1(final int index) {
+    private void refreshDownList() {
         mStudentListRv.post(new Runnable() {
             @Override
             public void run() {
                 mAdapter.notifyItemRangeRemoved(0, 10);
-                mAdapter.notifyItemRangeInserted((index + 1), mAdapter.getItemCount());
+                mAdapter.notifyItemRangeInserted(51, 60);
+                isLoadingDown = false;
+
             }
         });
+//        mStudentListRv.smoothScrollToPosition(40);
+    }
+
+    private void refreshUpList() {
+        mStudentListRv.post(new Runnable() {
+            @Override
+            public void run() {
+                mAdapter.notifyItemRangeRemoved(50, 60);
+                mAdapter.notifyItemRangeInserted(0, 10);
+                isLoadingUp = false;
+            }
+        });
+    }
+
+    private void checkDbExits() {
+        File file = new File(Environment.getDataDirectory() + "/data/" +
+                getPackageName() + "/databases/" + DATABASE_NAME);
+        if (!file.exists()) {
+            insertStudentNames();
+        }
     }
 }
