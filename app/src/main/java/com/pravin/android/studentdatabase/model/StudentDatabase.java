@@ -4,10 +4,6 @@ import android.content.Context;
 import android.database.sqlite.SQLiteDatabase;
 import android.database.sqlite.SQLiteOpenHelper;
 
-/**
- * Created by pravin on 1/2/18.
- */
-
 public class StudentDatabase extends SQLiteOpenHelper {
 
     private static String mTableName;

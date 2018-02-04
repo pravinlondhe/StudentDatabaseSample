@@ -32,30 +32,23 @@ public class StudentDbAdapter extends RecyclerView.Adapter<RecyclerView.ViewHold
     public synchronized void loaded10MoreDownItems(List<Student> list) {
         mStudentList.addAll(new ArrayList<>(list));
         mStudentList = new ArrayList<>(mStudentList.subList(10, mStudentList.size()));
-        Log.d(TAG, "New list with 10 down list");
-        for (Student s : mStudentList) {
-            Log.d(TAG, "Roll No.:" + s.getRollNo() + " Name:" + s.getName());
-        }
     }
-
-    public void displayLoadingItem() {
-        mStudentList.add(null);
-    }
-
-    public void removeLoadingItem() {
-        mStudentList.remove(null);
-        Log.d(TAG, "removed loading item" + mStudentList.size());
-
-    }
-
 
     public synchronized void loaded10MoreUpItems(List<Student> list) {
         mStudentList.addAll(0, list);
         mStudentList = new ArrayList<>(mStudentList.subList(0, 50));
-        Log.d(TAG, "New list with 10 Up list");
-        for (Student s : mStudentList) {
-            Log.d(TAG, "Roll No.:" + s.getRollNo() + " Name:" + s.getName());
+    }
+
+    public void displayLoadingItem(boolean atStart) {
+        if (atStart) {
+            mStudentList.add(0, null);
+        } else {
+            mStudentList.add(null);
         }
+    }
+
+    public void removeLoadingItem() {
+        mStudentList.remove(null);
     }
 
     @Override

@@ -3,14 +3,10 @@ package com.pravin.android.studentdatabase.model;
 import android.content.ContentValues;
 import android.database.Cursor;
 import android.database.sqlite.SQLiteDatabase;
-import android.util.Log;
 
 import java.util.ArrayList;
 import java.util.List;
 
-/**
- * Created by pravin on 1/2/18.
- */
 
 public class StudentDbDao {
 
@@ -49,10 +45,12 @@ public class StudentDbDao {
 
     public synchronized List<Student> get50StudentList() {
         list.clear();
-        String readQuery = "SELECT " + ROLL_NO_COL_NAME + "," + STUDENT_NAME_COL_NAME + " FROM " + mStudentDatabase.getTableName() + " ORDER BY " + ROLL_NO_COL_NAME;
+        String readQuery = "SELECT * FROM " + mStudentDatabase.getTableName() +
+                " ORDER BY " + ROLL_NO_COL_NAME
+                + " LIMIT 50";
         SQLiteDatabase database = mStudentDatabase.getWritableDatabase();
         Cursor cursor = database.rawQuery(readQuery, null);
-        Log.d(TAG, "Cursor:" + cursor.getCount());
+//        Log.d(TAG, "Cursor:" + cursor.getCount());
         if (cursor.getCount() != 0 && cursor.moveToPosition(0)) {
             while (!cursor.isAfterLast() && list.size() < 50) {
                 int rollNo = cursor.getInt(cursor.getColumnIndex(ROLL_NO_COL_NAME));
@@ -62,7 +60,7 @@ public class StudentDbDao {
             }
         }
 
-        cursor.close();
+//        cursor.close();
 
         return list;
     }

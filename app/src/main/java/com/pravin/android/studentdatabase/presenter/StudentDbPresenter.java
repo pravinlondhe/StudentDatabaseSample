@@ -6,10 +6,6 @@ import com.pravin.android.studentdatabase.StudentDbContract;
 import com.pravin.android.studentdatabase.model.StudentDatabase;
 import com.pravin.android.studentdatabase.model.StudentDbDao;
 
-/**
- * Created by pravin on 2/2/18.
- */
-
 public class StudentDbPresenter implements StudentDbContract.Presenter {
 
     private final static String DATABASE_NAME = "STUDENT_DATABASE.db";

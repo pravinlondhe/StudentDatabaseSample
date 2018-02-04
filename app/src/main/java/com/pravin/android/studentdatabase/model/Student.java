@@ -1,9 +1,5 @@
 package com.pravin.android.studentdatabase.model;
 
-/**
- * Created by pravin on 1/2/18.
- */
-
 public class Student {
 
     private String name;

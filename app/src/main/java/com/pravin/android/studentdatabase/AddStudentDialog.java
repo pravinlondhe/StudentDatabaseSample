@@ -12,10 +12,6 @@ import android.widget.Toast;
 
 import com.pravin.android.studentdatabase.presenter.StudentDbPresenter;
 
-/**
- * Created by pravin on 1/2/18.
- */
-
 public class AddStudentDialog extends DialogFragment implements View.OnClickListener {
     //    private final static String TAG = AddStudentDialog.class.getSimpleName();
     private EditText mStudentNameEt;
